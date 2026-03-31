@@ -1,0 +1,20 @@
+{
+  "name": "joblink-checkr",
+  "version": "1.0.0",
+  "description": "Node.js CLI to read job links from a Google Sheet and check if they are reachable.",
+  "type": "module",
+  "main": "src/check-sheet.js",
+  "scripts": {
+    "check:sheet": "node src/check-sheet.js",
+    "check:sheet:dry": "node src/check-sheet.js --dry-run"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "googleapis": "^140.0.0",
+    "p-limit": "^6.1.0",
+    "undici": "^6.21.0"
+  }
+}
+

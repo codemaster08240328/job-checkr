@@ -1,0 +1,59 @@
+{
+  "urlColumnName": "URL",
+  "titleColumnName": "Position Title",
+  "concurrency": 8,
+  "timeoutMs": 15000,
+  "badKeywords": ["hybrid", "onsite", "cleared", "security clearance", "sc"],
+  "badTitleKeywords": ["intern", "Manager", "mobile", "frontend", "ops"],
+  "serviceAccount": {
+    "type": "service_account",
+    "project_id": "your-project-id",
+    "private_key_id": "xxxxx",
+    "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+    "client_email": "your-sa@your-project.iam.gserviceaccount.com",
+    "client_id": "123",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/your-sa%40your-project.iam.gserviceaccount.com"
+  },
+  "spreadsheets": [
+    {
+      "name": "Sheet-A",
+      "spreadsheetId": "spreadsheet_id_1_here",
+      "sheets": [
+        {
+          "name": "Jobs",
+          "rangeA1": "Sheet1!A1:G",
+          "headerRangeA1": "Jobs!A1:Z1",
+          "dataRangeA1": "Jobs!A78:Z"
+        }
+      ]
+    },
+    {
+      "name": "Sheet-B",
+      "spreadsheetId": "spreadsheet_id_2_here",
+      "sheets": [
+        {
+          "name": "Jobs",
+          "rangeA1": "Sheet1!A1:G",
+          "headerRangeA1": "Jobs!A1:Z1",
+          "dataRangeA1": "Jobs!A2:Z"
+        }
+      ]
+    },
+    {
+      "name": "Sheet-C",
+      "spreadsheetId": "spreadsheet_id_3_here",
+      "sheets": [
+        {
+          "name": "Jobs",
+          "rangeA1": "Sheet1!A1:G",
+          "headerRangeA1": "Jobs!A1:Z1",
+          "dataRangeA1": "Jobs!A2:Z"
+        }
+      ]
+    }
+  ]
+}
+
