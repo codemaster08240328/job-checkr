@@ -24,10 +24,12 @@
       "sheets": [
         {
           "name": "Jobs",
-          "rangeA1": "Sheet1!A:G",
           "headerRow1": 1,
           "dataStartRow1": 78,
-          "dataEndRow1": 250
+          "dataEndRow1": 250,
+          "sheetName": "Sheet1",
+          "startCol": "A",
+          "endCol": "G"
         }
       ]
     },
@@ -37,10 +39,12 @@
       "sheets": [
         {
           "name": "Jobs",
-          "rangeA1": "Sheet1!A:Z",
           "headerRow1": 1,
           "dataStartRow1": 2,
-          "dataEndRow1": 500
+          "dataEndRow1": 500,
+          "sheetName": "Sheet1",
+          "startCol": "A",
+          "endCol": "Z"
         }
       ]
     },
@@ -50,10 +54,12 @@
       "sheets": [
         {
           "name": "Jobs",
-          "rangeA1": "Sheet1!A:Z",
           "headerRow1": 1,
           "dataStartRow1": 2,
-          "dataEndRow1": 500
+          "dataEndRow1": 500,
+          "sheetName": "Sheet1",
+          "startCol": "A",
+          "endCol": "Z"
         }
       ]
     }

@@ -33,15 +33,16 @@ This repo avoids committing `.env` files. Use a JSON config instead:
    - `badKeywords` (optional): if any of these phrases appear in the job description page text, `Approved` becomes `No`
    - `badTitleKeywords` (optional): if any of these phrases appear in the position title, the URL check is skipped and `Approved` becomes `No`
    - `serviceAccount` (paste the full service account JSON object)
-   - For each sheet entry you can configure either:
-     - `headerRangeA1` + `dataRangeA1` (classic A1 ranges), or
-     - `rangeA1` + `headerRow1` + `dataStartRow1` (+ optional `dataEndRow1`)
+   - For each sheet entry configure:
+     - `sheetName`, `startCol`, `endCol`
+     - `headerRow1`, `dataStartRow1`, `dataEndRow1`
 
-### Row-only header/data config
+### Row/column config (no A1 ranges)
 
-If you don’t want to repeat column letters in multiple ranges, set:
+Set:
 
-- `rangeA1`: the sheet + column span, like `Jobs!A:Z` (row numbers optional)
+- `sheetName`: the tab name in Google Sheets (e.g. `Jobs` or `Sheet1`)
+- `startCol` / `endCol`: column letters (e.g. `A` and `Z`)
 - `headerRow1`: header row number (1-based)
 - `dataStartRow1`: first data row number (1-based, inclusive)
 - `dataEndRow1`: last data row number (1-based, inclusive)
