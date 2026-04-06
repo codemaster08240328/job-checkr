@@ -24,9 +24,10 @@
       "sheets": [
         {
           "name": "Jobs",
-          "rangeA1": "Sheet1!A1:G",
-          "headerRangeA1": "Jobs!A1:Z1",
-          "dataRangeA1": "Jobs!A78:Z"
+          "rangeA1": "Sheet1!A:G",
+          "headerRow1": 1,
+          "dataStartRow1": 78,
+          "dataEndRow1": 250
         }
       ]
     },
@@ -36,9 +37,10 @@
       "sheets": [
         {
           "name": "Jobs",
-          "rangeA1": "Sheet1!A1:G",
-          "headerRangeA1": "Jobs!A1:Z1",
-          "dataRangeA1": "Jobs!A2:Z"
+          "rangeA1": "Sheet1!A:Z",
+          "headerRow1": 1,
+          "dataStartRow1": 2,
+          "dataEndRow1": 500
         }
       ]
     },
@@ -48,9 +50,10 @@
       "sheets": [
         {
           "name": "Jobs",
-          "rangeA1": "Sheet1!A1:G",
-          "headerRangeA1": "Jobs!A1:Z1",
-          "dataRangeA1": "Jobs!A2:Z"
+          "rangeA1": "Sheet1!A:Z",
+          "headerRow1": 1,
+          "dataStartRow1": 2,
+          "dataEndRow1": 500
         }
       ]
     }

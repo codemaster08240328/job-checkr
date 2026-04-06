@@ -83,33 +83,49 @@ function buildUpdateRange(sheetName, startRow1, startCol1, numRows, numCols) {
   return `${sheetName}!${startCol}${startRow1}:${endCol}${endRow}`;
 }
 
-function parseSimpleA1Range(a1) {
-  // Supports: Sheet!A1:Z, Sheet!A1:Z99, Sheet!A1:Z1
-  // Does NOT support: Sheet!A:Z, Sheet!A1:Z (without sheet), etc.
-  const m = /^([^!]+)!([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)?$/.exec(String(a1));
+function parseA1ColSpan(a1) {
+  // Supports:
+  // - Sheet!A1:Z
+  // - Sheet!A1:Z99
+  // - Sheet!A:Z          (rowless column span)
+  // - Sheet!A78:Z        (no end row)
+  const m =
+    /^([^!]+)!([A-Za-z]+)(\d+)?:([A-Za-z]+)(\d+)?$/.exec(String(a1));
   if (!m) {
     throw new Error(
-      `Unsupported A1 range "${a1}". Expected format like "Jobs!A1:Z" or "Jobs!A1:Z200".`
+      `Unsupported A1 range "${a1}". Expected format like "Jobs!A1:Z", "Jobs!A1:Z200", or "Jobs!A:Z".`
     );
   }
   const sheetName = m[1];
   const startCol1 = fromA1Column(m[2]);
-  const startRow1 = Number(m[3]);
+  const startRow1 = m[3] ? Number(m[3]) : null;
   const endCol1 = fromA1Column(m[4]);
   const endRow1 = m[5] ? Number(m[5]) : null;
 
-  if (!Number.isFinite(startRow1) || startRow1 <= 0) {
+  if (startRow1 != null && (!Number.isFinite(startRow1) || startRow1 <= 0)) {
     throw new Error(`Invalid start row in range "${a1}"`);
   }
   if (endRow1 != null && (!Number.isFinite(endRow1) || endRow1 <= 0)) {
     throw new Error(`Invalid end row in range "${a1}"`);
   }
   if (endCol1 < startCol1) throw new Error(`Invalid column span in "${a1}"`);
-  if (endRow1 != null && endRow1 < startRow1) {
+  if (startRow1 != null && endRow1 != null && endRow1 < startRow1) {
     throw new Error(`Invalid row span in "${a1}"`);
   }
 
   return { sheetName, startCol1, startRow1, endCol1, endRow1 };
+}
+
+function parseSimpleA1Range(a1) {
+  // Supports: Sheet!A1:Z, Sheet!A1:Z99, Sheet!A78:Z
+  // Does NOT support: Sheet!A:Z (rowless) because callers need a concrete startRow1.
+  const meta = parseA1ColSpan(a1);
+  if (meta.startRow1 == null) {
+    throw new Error(
+      `Unsupported A1 range "${a1}". Expected a start row like "Jobs!A1:Z" or "Jobs!A78:Z".`
+    );
+  }
+  return meta;
 }
 
 function formatNowIso() {
@@ -138,6 +154,9 @@ async function processOneSheet({
   rangeA1,
   headerRangeA1,
   dataRangeA1,
+  headerRow1,
+  dataStartRow1,
+  dataEndRow1,
   urlColumnName,
   titleColumnName,
   concurrency,
@@ -146,6 +165,11 @@ async function processOneSheet({
   badTitleKeywordsLower,
   dryRun,
 }) {
+  const hasRowOnlyConfig =
+    Number.isFinite(headerRow1) ||
+    Number.isFinite(dataStartRow1) ||
+    Number.isFinite(dataEndRow1);
+
   const effectiveRange = headerRangeA1 || dataRangeA1 || rangeA1;
   const primarySheetName = effectiveRange?.split("!")[0];
   if (!primarySheetName) {
@@ -158,7 +182,71 @@ async function processOneSheet({
   let rows;
   let dataRangeMeta = null;
 
-  if (headerRangeA1 && dataRangeA1) {
+  // If headerRow1/dataStartRow1 are provided, build headerRangeA1/dataRangeA1 from rangeA1's sheet + column span.
+  if (hasRowOnlyConfig) {
+    if (!rangeA1) {
+      throw new Error(
+        "Row-only config requires rangeA1 to define the sheet name and column span, e.g. \"Jobs!A:Z\"."
+      );
+    }
+    const span = parseA1ColSpan(rangeA1);
+
+    const hdrRow = Number.isFinite(headerRow1)
+      ? headerRow1
+      : span.startRow1 ?? 1;
+
+    // For row-only config, require an explicit dataStart + dataEnd (inclusive).
+    const hasDataStart = Number.isFinite(dataStartRow1);
+    const hasDataEnd = Number.isFinite(dataEndRow1);
+    if (hasDataStart !== hasDataEnd) {
+      throw new Error(
+        "Row-only config requires BOTH dataStartRow1 and dataEndRow1 (inclusive)."
+      );
+    }
+    if (!hasDataStart || !hasDataEnd) {
+      throw new Error(
+        "Row-only config requires dataStartRow1 and dataEndRow1."
+      );
+    }
+    const dataStart = dataStartRow1;
+    const dataEnd = dataEndRow1;
+
+    if (!Number.isFinite(hdrRow) || hdrRow <= 0) {
+      throw new Error(`Invalid headerRow1: ${headerRow1}`);
+    }
+    if (!Number.isFinite(dataStart) || dataStart <= 0) {
+      throw new Error(`Invalid dataStartRow1: ${dataStartRow1}`);
+    }
+    if (!Number.isFinite(dataEnd) || dataEnd <= 0 || dataEnd < dataStart) {
+      throw new Error(
+        `Invalid dataEndRow1 (${dataEnd}); must be >= dataStartRow1 (${dataStart}).`
+      );
+    }
+
+    const startCol = toA1Column(span.startCol1);
+    const endCol = toA1Column(span.endCol1);
+    const builtHeaderRangeA1 = `${span.sheetName}!${startCol}${hdrRow}:${endCol}${hdrRow}`;
+    const builtDataRangeA1 = `${span.sheetName}!${startCol}${dataStart}:${endCol}${dataEnd}`;
+
+    const [headerValues, dataValues] = await Promise.all([
+      readSheetValues({
+        sheets,
+        spreadsheetId,
+        rangeA1: builtHeaderRangeA1,
+      }),
+      readSheetValues({
+        sheets,
+        spreadsheetId,
+        rangeA1: builtDataRangeA1,
+      }),
+    ]);
+    if (headerValues.length === 0) {
+      throw new Error("No rows returned from headerRow1/header range.");
+    }
+    header = headerValues[0];
+    rows = dataValues;
+    dataRangeMeta = parseSimpleA1Range(builtDataRangeA1);
+  } else if (headerRangeA1 && dataRangeA1) {
     const [headerValues, dataValues] = await Promise.all([
       readSheetValues({ sheets, spreadsheetId, rangeA1: headerRangeA1 }),
       readSheetValues({ sheets, spreadsheetId, rangeA1: dataRangeA1 }),
@@ -476,6 +564,9 @@ Run:
         rangeA1: job.rangeA1 ?? cfg?.rangeA1 ?? requireEnv("GOOGLE_SHEETS_RANGE"),
         headerRangeA1: job.headerRangeA1 ?? cfg?.headerRangeA1 ?? null,
         dataRangeA1: job.dataRangeA1 ?? cfg?.dataRangeA1 ?? null,
+        headerRow1: Number(job.headerRow1 ?? cfg?.headerRow1 ?? NaN),
+        dataStartRow1: Number(job.dataStartRow1 ?? cfg?.dataStartRow1 ?? NaN),
+        dataEndRow1: Number(job.dataEndRow1 ?? cfg?.dataEndRow1 ?? NaN),
         urlColumnName,
         titleColumnName,
         concurrency,
